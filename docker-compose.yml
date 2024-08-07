@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: gunicorn --bind 0.0.0.0:8000 conf.wsgi
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  fast-api:
+    build: .
+    command: uvicorn API.main:app --reload --port 9999 --host 0.0.0.0
+    volumes:
+      - .:/app
+    ports:
+      - "9999:9999"
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  bot:
+    build: .
+    command: python3 -m bot polling
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
